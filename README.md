@@ -2,6 +2,9 @@
 
 A pre-commit hook for running `nextflow lint` on Nextflow pipeline files.
 
+> [!IMPORTANT]
+> This is an open-source project for community benefit. It is provided as-is and is not part of Seqera's officially supported toolset.
+
 ## What is Nextflow Lint?
 
 `nextflow lint` is a command provided by Nextflow that checks your pipeline scripts for common issues and best practices. It helps ensure your Nextflow workflows follow proper conventions and can catch potential problems early in development.
