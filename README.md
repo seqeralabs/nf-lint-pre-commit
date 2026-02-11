@@ -1,8 +1,15 @@
 # Nextflow Lint Pre-commit Hook
 
-A [pre-commit](https://pre-commit.com/) hook for running [`nextflow lint`](https://www.nextflow.io/docs/latest/reference/cli.html#lint) on Nextflow pipeline files.
+A pre-commit hook for running `nextflow lint` on Nextflow pipeline files.
 
-## Prerequisites
+> [!IMPORTANT]
+> This is an open-source project for community benefit. It is provided as-is and is not part of Seqera's officially supported toolset.
+
+## What is Nextflow Lint?
+
+`nextflow lint` is a command provided by Nextflow that checks your pipeline scripts for common issues and best practices. It helps ensure your Nextflow workflows follow proper conventions and can catch potential problems early in development.
+
+## Installation
 
 - [Nextflow](https://www.nextflow.io/) (v25.04+) installed and available in your `PATH`
 - [pre-commit](https://pre-commit.com/) installed
@@ -88,4 +95,4 @@ pre-commit run --all-files
 
 ## License
 
-MIT
+This project is licensed under the MIT License.
