@@ -20,8 +20,8 @@ A pre-commit hook for running `nextflow lint` on Nextflow pipeline files.
 
 ```yaml
 repos:
-  - repo: https://github.com/adamrtalbot/nf-lint-pre-commit
-    rev: v0.1.0  # Use the latest release tag
+  - repo: https://github.com/seqeralabs/nf-lint-pre-commit
+    rev: v0.2.0  # Use the latest release tag
     hooks:
       - id: nextflow-lint
 ```

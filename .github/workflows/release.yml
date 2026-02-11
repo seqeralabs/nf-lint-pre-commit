@@ -58,7 +58,7 @@ jobs:
 
             ```yaml
             repos:
-              - repo: https://github.com/adamrtalbot/nf-lint-pre-commit
+              - repo: https://github.com/seqeralabs/nf-lint-pre-commit
                 rev: ${{ github.ref_name }}
                 hooks:
                   - id: nextflow-lint
