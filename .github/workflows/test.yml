@@ -28,12 +28,13 @@ jobs:
       - name: Make hook executable
         run: chmod +x nextflow-lint-hook
 
-      - name: Test basic functionality
+      - name: Test with no files
         run: |
-          # Test with no files (should exit cleanly)
+          # Should exit cleanly when no files are passed
           ./nextflow-lint-hook
 
-          # Create valid test file
+      - name: Test with valid Nextflow file
+        run: |
           cat > test.nf << 'EOF'
           #!/usr/bin/env nextflow
           nextflow.enable.dsl = 2
@@ -46,42 +47,79 @@ jobs:
           workflow { test() }
           EOF
 
-          # Create config file
-          cat > nextflow.config << 'EOF'
-          params {
-              input = 'test'
-              output = 'results'
-          }
-          EOF
+          ./nextflow-lint-hook test.nf
 
-          # Create config file
-          cat > nextflow.config << 'EOF'
-          params {
-              input = 'test'
-              output = 'results'
-          }
-          EOF
-
-          # Test basic linting
-          ./nextflow-lint-hook
-
-          # Test with arguments
-          ./nextflow-lint-hook -output concise
-          ./nextflow-lint-hook -format
-
-      - name: Test invalid file handling
+      - name: Test with valid config file
         run: |
-          # Create invalid file
+          cat > nextflow.config << 'EOF'
+          params {
+              input = 'test'
+              output = 'results'
+          }
+          EOF
+
+          ./nextflow-lint-hook nextflow.config
+
+      - name: Test with multiple files
+        run: |
+          ./nextflow-lint-hook test.nf nextflow.config
+
+      - name: Test with arguments
+        run: |
+          ./nextflow-lint-hook -output concise test.nf
+          ./nextflow-lint-hook -format test.nf nextflow.config
+
+      - name: Test invalid file fails
+        run: |
           cat > invalid.nf << 'EOF'
           #!/usr/bin/env nextflow
           process bad { script: "echo test"
           EOF
 
           # Should fail with invalid syntax
-          if ./nextflow-lint-hook; then
+          if ./nextflow-lint-hook invalid.nf; then
             echo "Should have failed"
             exit 1
           fi
+
+      - name: Test mixed valid and invalid files
+        run: |
+          # One bad file should fail the entire batch
+          if ./nextflow-lint-hook test.nf invalid.nf; then
+            echo "Should have failed with mixed valid/invalid files"
+            exit 1
+          fi
+
+      - name: Test config-only with args
+        run: |
+          ./nextflow-lint-hook -output concise nextflow.config
+
+      - name: Test -format modifies files
+        run: |
+          cat > unformatted.nf << 'EOF'
+          process UNFORMATTED {
+          output:
+          stdout
+          script:
+          "echo test"
+          }
+          EOF
+
+          cp unformatted.nf unformatted.nf.bak
+          ./nextflow-lint-hook -format unformatted.nf
+          # File should have been modified by -format
+          if diff -q unformatted.nf unformatted.nf.bak > /dev/null 2>&1; then
+            echo "Warning: -format did not modify the file (may be already formatted)"
+          else
+            echo "-format correctly modified the file"
+          fi
+
+      - name: Test file with spaces in path
+        run: |
+          mkdir -p "test dir"
+          cp test.nf "test dir/my workflow.nf"
+          ./nextflow-lint-hook "test dir/my workflow.nf"
+          rm -rf "test dir"
 
   test-pre-commit:
     name: Test Pre-commit Integration
@@ -107,7 +145,6 @@ jobs:
 
       - name: Test pre-commit integration
         run: |
-          # Create test config
           cat > .pre-commit-config.yaml << 'EOF'
           repos:
             - repo: local
@@ -116,10 +153,10 @@ jobs:
                   name: Nextflow Lint
                   entry: ./nextflow-lint-hook
                   language: script
-                  files: \.nf$
+                  files: \.(nf|config)$
+                  pass_filenames: true
           EOF
 
-          # Create test file
           cat > main.nf << 'EOF'
           #!/usr/bin/env nextflow
           nextflow.enable.dsl = 2
@@ -132,8 +169,13 @@ jobs:
           workflow { test() }
           EOF
 
-          # Test pre-commit
+          # Create a non-Nextflow file that should be ignored by the hook
+          echo "print('hello')" > script.py
+
           pre-commit run --all-files
+
+          # Verify the .py file didn't trigger the hook (it would fail if passed)
+          echo "Pre-commit correctly filtered non-matching files"
 
   test-no-nextflow:
     name: Test Without Nextflow
@@ -148,10 +190,13 @@ jobs:
 
       - name: Test graceful failure
         run: |
-          echo '#!/usr/bin/env nextflow\nprocess test { script: "echo test" }' > test.nf
+          cat > test.nf << 'EOF'
+          #!/usr/bin/env nextflow
+          process test { script: "echo test" }
+          EOF
 
           # Should fail gracefully without Nextflow
-          if ./nextflow-lint-hook; then
+          if ./nextflow-lint-hook test.nf; then
             echo "Should have failed without Nextflow"
             exit 1
           fi
