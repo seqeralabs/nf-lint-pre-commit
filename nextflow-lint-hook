@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Check if nextflow is installed
 if ! command -v nextflow &> /dev/null; then
@@ -8,19 +8,38 @@ if ! command -v nextflow &> /dev/null; then
     exit 1
 fi
 
-# Find all Nextflow files in the current directory and subdirectories
-NF_FILES=$(find . -name "*.nf" -type f | grep -v '\.git' | grep -v '\.nextflow' | head -20)
+# Separate nextflow lint flags from file arguments.
+# pre-commit passes: [args...] [filenames...]
+# Flags that take a value: -output/-o, -exclude, -spaces
+args=()
+files=()
+expect_value=false
+for arg in "$@"; do
+    if $expect_value; then
+        args+=("$arg")
+        expect_value=false
+    elif [[ "$arg" == -* && ${#files[@]} -eq 0 ]]; then
+        args+=("$arg")
+        # These flags require a following value argument
+        case "$arg" in
+            -output|-o|-exclude|-spaces) expect_value=true ;;
+        esac
+    else
+        files+=("$arg")
+    fi
+done
 
-# Check if there are any Nextflow files
-if [ -z "$NF_FILES" ]; then
+# If no files were passed, nothing to lint
+if [[ ${#files[@]} -eq 0 ]]; then
     echo "No Nextflow files found to lint"
     exit 0
 fi
 
-# Run nextflow lint with any provided arguments
-if nextflow lint "$@" $NF_FILES; then
+# Run nextflow lint with flags followed by files
+# Use ${args[@]+"${args[@]}"} for bash 3.x compatibility (empty array + set -u)
+if nextflow lint ${args[@]+"${args[@]}"} "${files[@]}"; then
     echo "✅ Nextflow lint passed"
 else
     echo "❌ Nextflow lint failed"
     exit 1
-fi 
+fi

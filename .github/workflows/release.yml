@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   release:
     name: Create Release
@@ -19,20 +22,18 @@ jobs:
         with:
           version: "latest"
 
-      - name: Run tests before release
+      - name: Smoke test before release
         run: |
           chmod +x nextflow-lint-hook
 
-          # Create a simple test file
           cat > release_test.nf << 'EOF'
           #!/usr/bin/env nextflow
-
           nextflow.enable.dsl = 2
 
           process test {
               output:
               stdout
-              
+
               script:
               """
               echo "Release test"
@@ -44,24 +45,15 @@ jobs:
           }
           EOF
 
-          # Test the hook
-          ./nextflow-lint-hook
+          ./nextflow-lint-hook release_test.nf
 
       - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          generate_release_notes: true
           body: |
-            ## Nextflow Lint Pre-commit Hook Release
+            ## Usage
 
-            ### What's Included
-            - `nextflow-lint-hook` - The main hook script
-            - `.pre-commit-hooks.yaml` - Hook configuration
-
-            ### Usage
             Add this to your `.pre-commit-config.yaml`:
 
             ```yaml
@@ -72,10 +64,4 @@ jobs:
                   - id: nextflow-lint
             ```
 
-            ### Requirements
-            - Nextflow must be installed and available in PATH
-            - pre-commit framework
-
-            See the README for full documentation.
-          draft: false
-          prerelease: false
+            See the [README](README.md) for full documentation.
