@@ -136,7 +136,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pre-commit
+          pip install prek
           curl -s https://get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
@@ -172,10 +172,10 @@ jobs:
           # Create a non-Nextflow file that should be ignored by the hook
           echo "print('hello')" > script.py
 
-          pre-commit run --all-files
+          prek run --all-files
 
           # Verify the .py file didn't trigger the hook (it would fail if passed)
-          echo "Pre-commit correctly filtered non-matching files"
+          echo "Pre-commit hook correctly filtered non-matching files"
 
   test-no-nextflow:
     name: Test Without Nextflow
