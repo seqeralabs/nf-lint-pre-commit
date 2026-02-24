@@ -37,21 +37,16 @@ fi
 
 # Run nextflow lint in batches to avoid "Argument list too long" (E2BIG)
 # when pre-commit passes thousands of files on large repos.
-# Capture output so we show a single clean summary on success,
-# and only dump full output when there are actual errors.
 batch_size=200
 lint_failed=false
-all_output=""
 
 for ((i=0; i<${#files[@]}; i+=batch_size)); do
     batch=("${files[@]:i:batch_size}")
     # Use ${args[@]+...} for bash 3.x compatibility (empty array + set -u)
-    batch_output=$(nextflow lint ${args[@]+"${args[@]}"} "${batch[@]}" 2>&1) || lint_failed=true
-    all_output+="$batch_output"$'\n'
+    nextflow lint ${args[@]+"${args[@]}"} "${batch[@]}" || lint_failed=true
 done
 
 if $lint_failed; then
-    printf '%s' "$all_output"
     echo "❌ Nextflow lint failed"
     exit 1
 else
