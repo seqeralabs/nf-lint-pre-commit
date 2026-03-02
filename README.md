@@ -12,7 +12,7 @@ A pre-commit hook for running `nextflow lint` on Nextflow pipeline files.
 ## Installation
 
 - [Nextflow](https://www.nextflow.io/) (v25.04+) installed and available in your `PATH`
-- [pre-commit](https://pre-commit.com/) installed
+- [prek](https://prek.j178.dev/) installed
 
 ## Setup
 
@@ -29,7 +29,7 @@ repos:
 2. Install the hook:
 
 ```bash
-pre-commit install
+prek install
 ```
 
 The hook will now run `nextflow lint` on any staged `.nf` and `.config` files when you commit.
@@ -59,10 +59,10 @@ hooks:
 
 ```bash
 # Run on all files
-pre-commit run nextflow-lint --all-files
+prek run nextflow-lint --all-files
 
 # Run on specific files
-pre-commit run nextflow-lint --files main.nf
+prek run nextflow-lint --files main.nf
 ```
 
 ## Troubleshooting
@@ -88,9 +88,9 @@ chmod +x nextflow-lint-hook
 ./nextflow-lint-hook main.nf
 ./nextflow-lint-hook -format main.nf nextflow.config
 
-# Test with pre-commit
-pip install pre-commit
-pre-commit run --all-files
+# Test with prek
+pip install prek
+prek run --all-files
 ```
 
 ## License
