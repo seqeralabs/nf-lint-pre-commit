@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        nextflow-version: ["25.04.6", "latest"]
+        nextflow-version: ["26.04.0", "latest"]
 
     steps:
       - name: Checkout code
@@ -120,6 +120,17 @@ jobs:
           cp test.nf "test dir/my workflow.nf"
           ./nextflow-lint-hook "test dir/my workflow.nf"
           rm -rf "test dir"
+
+      - name: Test many files (ARG_MAX / -files-from stdin)
+        run: |
+          # Generate many valid files to exercise the stdin -files-from path.
+          # Passing this many paths positionally would risk "Argument list too long".
+          mkdir -p many
+          for i in $(seq 1 500); do
+            cp test.nf "many/wf_${i}.nf"
+          done
+          ./nextflow-lint-hook many/*.nf
+          rm -rf many
 
   test-pre-commit:
     name: Test Pre-commit Integration

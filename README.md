@@ -11,7 +11,7 @@ A pre-commit hook for running `nextflow lint` on Nextflow pipeline files.
 
 ## Installation
 
-- [Nextflow](https://www.nextflow.io/) (v25.04+) installed and available in your `PATH`
+- [Nextflow](https://www.nextflow.io/) (v26.04+) installed and available in your `PATH`
 - [prek](https://prek.j178.dev/) installed
 
 ## Setup
@@ -33,6 +33,8 @@ prek install
 ```
 
 The hook will now run `nextflow lint` on any staged `.nf` and `.config` files when you commit.
+
+Filenames are streamed to `nextflow lint` via `-files-from -` (stdin) rather than as command-line arguments, so the hook works in very large repositories without hitting `Argument list too long` (`ARG_MAX`).
 
 ## Configuration
 
