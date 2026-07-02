@@ -34,7 +34,6 @@ prek install
 
 The hook will now run `nextflow lint` on any staged `.nf` and `.config` files when you commit.
 
-
 ## Configuration
 
 Pass any [`nextflow lint` arguments](https://www.nextflow.io/docs/latest/reference/cli.html#lint) via `args`:
