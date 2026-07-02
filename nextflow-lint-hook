@@ -12,7 +12,7 @@ fi
 # relies on to stream filenames via stdin (avoids the OS ARG_MAX limit).
 required_major=26
 required_minor=4
-nf_version=$(nextflow -version 2>/dev/null | grep -oE 'version [0-9]+\.[0-9]+' | head -1 | grep -oE '[0-9]+\.[0-9]+' || true)
+nf_version=$(nextflow -version 2>/dev/null | sed -nE 's/.*version ([0-9]+\.[0-9]+).*/\1/p' || true)
 if [[ -z "$nf_version" ]]; then
     echo "Warning: could not determine Nextflow version; this hook requires Nextflow >= ${required_major}.$(printf '%02d' "$required_minor") for -files-from support"
 else
@@ -20,7 +20,7 @@ else
     nf_minor=${nf_version#*.}
     # 10# forces base-10 so leading zeros (e.g. 04) are not read as octal
     if (( 10#$nf_major < required_major || (10#$nf_major == required_major && 10#$nf_minor < required_minor) )); then
-        echo "Error: Nextflow >= ${required_major}.$(printf '%02d' "$required_minor") is required (found ${nf_version}); the -files-from option was added in ${required_major}.$(printf '%02d' "$required_minor")"
+        echo "Error: Nextflow >= ${required_major}.$(printf '%02d' "$required_minor") is required (found ${nf_version})"  
         echo "Please upgrade Nextflow: https://www.nextflow.io/"
         exit 1
     fi
