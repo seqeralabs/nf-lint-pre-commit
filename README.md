@@ -11,7 +11,7 @@ A pre-commit hook for running `nextflow lint` on Nextflow pipeline files.
 
 ## Installation
 
-- [Nextflow](https://www.nextflow.io/) (v25.04+) installed and available in your `PATH`
+- [Nextflow](https://www.nextflow.io/) (v26.04+) installed and available in your `PATH`
 - [prek](https://prek.j178.dev/) installed
 
 ## Setup

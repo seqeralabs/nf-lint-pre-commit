@@ -8,6 +8,24 @@ if ! command -v nextflow &> /dev/null; then
     exit 1
 fi
 
+# Require Nextflow >= 26.04, which introduced the -files-from option this hook
+# relies on to stream filenames via stdin (avoids the OS ARG_MAX limit).
+required_major=26
+required_minor=4
+nf_version=$(nextflow -version 2>/dev/null | sed -nE 's/.*version ([0-9]+\.[0-9]+).*/\1/p' || true)
+if [[ -z "$nf_version" ]]; then
+    echo "Warning: could not determine Nextflow version; this hook requires Nextflow >= ${required_major}.$(printf '%02d' "$required_minor") for -files-from support"
+else
+    nf_major=${nf_version%%.*}
+    nf_minor=${nf_version#*.}
+    # 10# forces base-10 so leading zeros (e.g. 04) are not read as octal
+    if (( 10#$nf_major < required_major || (10#$nf_major == required_major && 10#$nf_minor < required_minor) )); then
+        echo "Error: Nextflow >= ${required_major}.$(printf '%02d' "$required_minor") is required (found ${nf_version})"  
+        echo "Please upgrade Nextflow: https://www.nextflow.io/"
+        exit 1
+    fi
+fi
+
 # Separate nextflow lint flags from file arguments.
 # pre-commit passes: [args...] [filenames...]
 # Flags that take a value: -output/-o, -exclude, -spaces
@@ -35,28 +53,15 @@ if [[ ${#files[@]} -eq 0 ]]; then
     exit 0
 fi
 
-# Run nextflow lint in batches to avoid "Argument list too long" (E2BIG)
-# when pre-commit passes thousands of files on large repos.
-# Capture output so we can filter per-batch success noise while
-# always showing errors, warnings, and any other diagnostic output.
-batch_size=200
-lint_failed=false
-all_output=""
-
-for ((i=0; i<${#files[@]}; i+=batch_size)); do
-    batch=("${files[@]:i:batch_size}")
-    # Use ${args[@]+...} for bash 3.x compatibility (empty array + set -u)
-    batch_output=$(nextflow lint ${args[@]+"${args[@]}"} "${batch[@]}" 2>&1) || lint_failed=true
-    all_output+="$batch_output"$'\n'
-done
-
-# Always display output (errors are never hidden), but filter out
-# the per-batch success summaries to keep CI logs readable.
-printf '%s' "$all_output" | grep -vE 'Nextflow linting complete!|files had no errors' || true
-
-if $lint_failed; then
+# Feed filenames to nextflow lint via stdin (-files-from -) so they never hit
+# the OS "Argument list too long" (E2BIG) limit, no matter how many files
+# pre-commit passes. This is a single JVM invocation regardless of file count.
+# printf newline-delimits paths, so paths with spaces are safe.
+# Requires Nextflow >= 26.04 (which introduced -files-from).
+# Use ${args[@]+...} for bash 3.x compatibility (empty array + set -u).
+if printf '%s\n' "${files[@]}" | nextflow lint ${args[@]+"${args[@]}"} -files-from -; then
+    echo "✅ Nextflow lint passed (${#files[@]} files)"
+else
     echo "❌ Nextflow lint failed"
     exit 1
-else
-    echo "✅ Nextflow lint passed (${#files[@]} files)"
 fi
