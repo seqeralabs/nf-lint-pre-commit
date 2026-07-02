@@ -34,7 +34,6 @@ prek install
 
 The hook will now run `nextflow lint` on any staged `.nf` and `.config` files when you commit.
 
-Filenames are streamed to `nextflow lint` via `-files-from -` (stdin) rather than as command-line arguments, so the hook works in very large repositories without hitting `Argument list too long` (`ARG_MAX`).
 
 ## Configuration
 
